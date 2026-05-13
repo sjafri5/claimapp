@@ -14,7 +14,8 @@ const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
 export function createSessionToken(userId: string): string {
   const timestamp = Date.now().toString(36);
   const payload = `${userId}.${timestamp}`;
-  const secret = process.env.CRON_SECRET || "dev-secret";
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) throw new Error("SESSION_SECRET environment variable is required");
   const signature = crypto
     .createHmac("sha256", secret)
     .update(payload)
@@ -32,7 +33,8 @@ export function verifySessionToken(token: string): string | null {
 
   const [userId, timestamp, signature] = parts;
   const payload = `${userId}.${timestamp}`;
-  const secret = process.env.CRON_SECRET || "dev-secret";
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) return null;
   const expected = crypto
     .createHmac("sha256", secret)
     .update(payload)
@@ -73,23 +75,6 @@ export async function getCurrentUser() {
 
   const userId = verifySessionToken(token);
   if (!userId) return null;
-
-  // In dry run without a real DB, return a stub user
-  if (process.env.DRY_RUN === "true" && !process.env.DATABASE_URL?.includes("@")) {
-    return {
-      id: userId,
-      email: "demo@claim.app",
-      timezone: "America/Chicago",
-      anniversaryCsr: null,
-      anniversaryUnited: null,
-      consentAt: new Date(),
-      status: "active" as const,
-      plan: "free" as const,
-      stripeCustomerId: null,
-      stripeSubscriptionId: null,
-      createdAt: new Date(),
-    };
-  }
 
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   return user ?? null;

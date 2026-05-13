@@ -5,16 +5,12 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().optional(),
   CRON_SECRET: z.string().min(1),
+  SESSION_SECRET: z.string().min(16, "SESSION_SECRET must be at least 16 characters"),
   ADMIN_EMAIL: z.string().email(),
   NEXT_PUBLIC_APP_URL: z.string().url(),
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
   STRIPE_PRICE_ID: z.string().min(1),
-  DRY_RUN: z
-    .string()
-    .optional()
-    .default("false")
-    .transform((v) => v === "true"),
 });
 
 export function getEnv() {

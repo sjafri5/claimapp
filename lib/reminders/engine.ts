@@ -21,6 +21,7 @@ import {
   computeCycleKey,
   getCycleParams,
 } from "./cycle-keys";
+import { logger } from "@/lib/logger";
 
 export interface ReminderResult {
   sent: number;
@@ -63,6 +64,7 @@ export async function runReminderEngine(
 
       for (const credit of cardCredits) {
         if (credit.lowPriority) {
+          logger.info("Skipping low-priority credit", { creditId: credit.id, name: credit.name });
           result.skipped++;
           continue;
         }
@@ -81,12 +83,7 @@ export async function runReminderEngine(
           continue;
         }
 
-        const anniversaryDate =
-          uc.cardId === "csr"
-            ? user.anniversaryCsr
-            : uc.cardId === "united_club_infinite"
-              ? user.anniversaryUnited
-              : null;
+        const anniversaryDate = getAnniversaryDate(user, uc.cardId);
 
         const deadlineDate = computeNextDeadline(
           credit,
@@ -175,6 +172,7 @@ export async function runReminderEngine(
             );
           }
         } catch (err) {
+          logger.error("Reminder error", { userId: user.id, creditId: credit.id, error: err });
           result.errors.push(
             `Error for user ${user.id}, credit ${credit.id}: ${err}`
           );
@@ -225,6 +223,24 @@ async function trySendReminder(
   });
 
   result.sent++;
+}
+
+/**
+ * Map of card IDs to the user field that stores their anniversary date.
+ * Add new anniversary-based cards here.
+ */
+const ANNIVERSARY_CARD_FIELDS: Record<string, "anniversaryCsr" | "anniversaryUnited"> = {
+  csr: "anniversaryCsr",
+  united_club_infinite: "anniversaryUnited",
+};
+
+function getAnniversaryDate(
+  user: { anniversaryCsr: string | null; anniversaryUnited: string | null },
+  cardId: string
+): string | null {
+  const field = ANNIVERSARY_CARD_FIELDS[cardId];
+  if (!field) return null;
+  return user[field] ?? null;
 }
 
 function getDateInTimezone(now: Date, timezone: string): Date {

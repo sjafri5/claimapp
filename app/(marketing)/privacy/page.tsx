@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { Logo } from "@/components/ui";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy — claim.app",
+  description: "How claim.app collects, uses, and protects your personal information.",
+};
 
 export default function PrivacyPage() {
   return (

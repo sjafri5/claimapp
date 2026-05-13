@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
@@ -16,9 +17,12 @@ import {
 } from "@/lib/reminders/cycle-keys";
 import { Logo } from "@/components/ui";
 import { DashboardClient } from "./client";
-import { cardSeeds } from "@/lib/seeds/cards";
-import { getAllSeedCredits } from "@/lib/seeds/all";
 import type { Credit } from "@/lib/db/schema";
+
+export const metadata: Metadata = {
+  title: "Dashboard — claim.app",
+  description: "Track your upcoming credit card credits and deadlines.",
+};
 
 export interface UpcomingCredit {
   creditId: string;
@@ -33,10 +37,6 @@ export interface UpcomingCredit {
   weekReminderSent: boolean;
 }
 
-const isDryRunNoDb =
-  process.env.DRY_RUN === "true" &&
-  !process.env.DATABASE_URL?.includes("@");
-
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/signup");
@@ -48,54 +48,7 @@ export default async function DashboardPage() {
 
   const upcoming: UpcomingCredit[] = [];
 
-  if (isDryRunNoDb) {
-    // Use seed data for demo — show all cards
-    const demoCards = cardSeeds.map((c) => c.id);
-    const allCredits = getAllSeedCredits();
-
-    for (const credit of allCredits) {
-      if (!demoCards.includes(credit.cardId)) continue;
-      if (credit.lowPriority) continue;
-      if (
-        credit.expiresAfterYear &&
-        todayDate.getFullYear() > credit.expiresAfterYear
-      )
-        continue;
-      if (!credit.active) continue;
-
-      const deadlineDate = computeNextDeadline(
-        credit as Credit,
-        todayDate,
-        credit.deadlineType === "anniversary" ? "2026-05-12" : null
-      );
-      if (!deadlineDate) continue;
-
-      const { year, month } = getCycleParams(credit as Credit, deadlineDate);
-      const cycleKey = computeCycleKey(credit as Credit, year, month);
-      const daysUntil = Math.ceil(
-        (deadlineDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      const card = cardSeeds.find((c) => c.id === credit.cardId);
-
-      upcoming.push({
-        creditId: credit.id,
-        creditName: credit.name,
-        cardName: card?.name ?? credit.cardId,
-        amountDollars: credit.amountCents / 100,
-        deadline: deadlineDate.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-        daysUntil,
-        isClaimed: false,
-        cycleKey,
-        monthReminderSent: false,
-        weekReminderSent: false,
-      });
-    }
-  } else {
+  {
     const userCardRows = await db
       .select({ cardId: userCards.cardId })
       .from(userCards)
@@ -120,12 +73,12 @@ export default async function DashboardPage() {
         )
           continue;
 
-        const anniversaryDate =
-          uc.cardId === "csr"
-            ? user.anniversaryCsr
-            : uc.cardId === "united_club_infinite"
-              ? user.anniversaryUnited
-              : null;
+        const anniversaryFields: Record<string, "anniversaryCsr" | "anniversaryUnited"> = {
+          csr: "anniversaryCsr",
+          united_club_infinite: "anniversaryUnited",
+        };
+        const anniversaryField = anniversaryFields[uc.cardId];
+        const anniversaryDate = anniversaryField ? user[anniversaryField] ?? null : null;
 
         const deadlineDate = computeNextDeadline(
           credit,

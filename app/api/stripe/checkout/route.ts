@@ -15,16 +15,6 @@ export async function POST() {
     return NextResponse.json({ error: "Already on Pro" }, { status: 400 });
   }
 
-  // Dry run: redirect straight to dashboard
-  if (
-    process.env.DRY_RUN === "true" &&
-    !process.env.DATABASE_URL?.includes("@")
-  ) {
-    return NextResponse.json({
-      url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?upgraded=true`,
-    });
-  }
-
   const stripe = getStripe();
 
   // Create or reuse Stripe customer

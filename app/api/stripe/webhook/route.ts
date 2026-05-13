@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   const stripe = getStripe();
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err) {
-    console.error("Webhook signature verification failed:", err);
+    logger.error("Webhook signature verification failed", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
             stripeSubscriptionId: session.subscription as string,
           })
           .where(eq(users.id, userId));
-        console.log(`User ${userId} upgraded to Pro`);
+        logger.info("User upgraded to Pro", { userId });
       }
       break;
     }
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest) {
         .update(users)
         .set({ plan: "free", stripeSubscriptionId: null })
         .where(eq(users.stripeCustomerId, customerId));
-      console.log(`Subscription deleted for customer ${customerId}`);
+      logger.info("Subscription deleted", { customerId });
       break;
     }
   }

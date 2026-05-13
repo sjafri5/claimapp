@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { Logo } from "@/components/ui";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Terms of Service — claim.app",
+  description: "Terms of service for using the claim.app email reminder service.",
+};
 
 export default function TermsPage() {
   return (
@@ -17,7 +23,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-gray-900">Service</h2>
           <p>
-            claim.app is an SMS reminder service that notifies you about
+            claim.app is an email reminder service that notifies you about
             upcoming credit card benefit deadlines. We do not guarantee the
             accuracy of benefit details, amounts, or deadlines. Always verify
             with your card issuer.
@@ -37,13 +43,13 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-lg font-semibold text-gray-900">
-            SMS consent
+            Email consent
           </h2>
           <p>
-            By signing up, you consent to receive recurring automated SMS
-            messages at the phone number you provide. Message frequency varies.
-            Message and data rates may apply. You can opt out at any time by
-            replying STOP.
+            By signing up, you consent to receive recurring email reminders at
+            the email address you provide. Email frequency varies based on your
+            credits. You can opt out at any time by clicking unsubscribe in any
+            email or from your dashboard.
           </p>
         </section>
 
@@ -63,9 +69,9 @@ export default function TermsPage() {
             Account termination
           </h2>
           <p>
-            You can terminate your account at any time by replying STOP to any
-            message. We reserve the right to terminate accounts that violate
-            these terms.
+            You can terminate your account at any time by clicking unsubscribe
+            in any email or from your dashboard. We reserve the right to
+            terminate accounts that violate these terms.
           </p>
         </section>
 

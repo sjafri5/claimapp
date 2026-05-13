@@ -6,6 +6,8 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { setSessionCookie } from "@/lib/auth/session";
 import crypto from "crypto";
+import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const schema = z.object({
   email: z.string().email(),
@@ -15,6 +17,21 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.ip ??
+      "unknown";
+    const { success } = rateLimit(`verify:${ip}`, {
+      windowMs: 15 * 60 * 1000,
+      max: 10,
+    });
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { email, code, timezone } = schema.parse(body);
 
@@ -24,17 +41,6 @@ export async function POST(req: NextRequest) {
         { error: "Invalid or expired code" },
         { status: 400 }
       );
-    }
-
-    // In dry run without a DB, create a fake session
-    if (process.env.DRY_RUN === "true" && !process.env.DATABASE_URL?.includes("@")) {
-      const fakeId = crypto.randomUUID();
-      await setSessionCookie(fakeId);
-      return NextResponse.json({
-        success: true,
-        userId: fakeId,
-        isNew: true,
-      });
     }
 
     // Upsert user
@@ -79,7 +85,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    console.error("verify-code error:", err);
+    logger.error("verify-code error", err);
     return NextResponse.json(
       { error: "Verification failed" },
       { status: 500 }

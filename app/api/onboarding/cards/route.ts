@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { userCards, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
+import { logger } from "@/lib/logger";
 
 const schema = z.object({
   cardIds: z.array(z.string()).min(1, "Select at least one card"),
@@ -28,12 +29,6 @@ export async function POST(req: NextRequest) {
         { error: "Free plan allows 1 card. Upgrade to Pro for unlimited cards.", upgrade: true },
         { status: 403 }
       );
-    }
-
-    // In dry run without a real DB, just return success
-    if (process.env.DRY_RUN === "true" && !process.env.DATABASE_URL?.includes("@")) {
-      console.log("[DRY_RUN] Cards saved:", cardIds, { anniversaryCsr, anniversaryUnited });
-      return NextResponse.json({ success: true });
     }
 
     // Delete existing cards and re-insert
@@ -67,7 +62,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    console.error("onboarding cards error:", err);
+    logger.error("onboarding cards error", err);
     return NextResponse.json(
       { error: "Failed to save cards" },
       { status: 500 }

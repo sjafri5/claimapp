@@ -15,13 +15,6 @@ export async function sendEmail(
   text: string,
   html?: string
 ): Promise<{ messageId: string } | null> {
-  const isDryRun = process.env.DRY_RUN === "true";
-
-  if (isDryRun) {
-    console.log(`[DRY_RUN] Email to ${to}: ${subject}\n${text}`);
-    return { messageId: `dry_run_${Date.now()}` };
-  }
-
   const resend = getClient();
   const { data, error } = await resend.emails.send({
     from: process.env.EMAIL_FROM || "claim.app <hi@claim.app>",

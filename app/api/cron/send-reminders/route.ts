@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runReminderEngine } from "@/lib/reminders/engine";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: NextRequest) {
   // Verify cron secret (Vercel Cron sends this as Authorization header)
@@ -13,17 +14,19 @@ export async function GET(req: NextRequest) {
   try {
     const result = await runReminderEngine();
 
-    console.log(
-      `Reminder engine completed: ${result.sent} sent, ${result.skipped} skipped, ${result.errors.length} errors`
-    );
+    logger.info("Reminder engine completed", {
+      sent: result.sent,
+      skipped: result.skipped,
+      errorCount: result.errors.length,
+    });
 
     if (result.errors.length > 0) {
-      console.error("Reminder errors:", result.errors);
+      logger.error("Reminder errors", result.errors);
     }
 
     return NextResponse.json(result);
   } catch (err) {
-    console.error("Cron send-reminders failed:", err);
+    logger.error("Cron send-reminders failed", err);
     return NextResponse.json(
       { error: "Reminder engine failed" },
       { status: 500 }
