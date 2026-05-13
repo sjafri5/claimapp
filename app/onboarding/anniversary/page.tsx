@@ -53,12 +53,30 @@ export default function AnniversaryPage() {
 
   return (
     <PageContainer>
-      <div className="mb-8 text-center">
+      <div style={{ textAlign: "center", marginBottom: 32 }}>
         <Logo />
-        <h1 className="mt-6 text-2xl font-bold text-gray-900">
+        <h1
+          style={{
+            marginTop: 24,
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontWeight: 500,
+            fontSize: 28,
+            fontStyle: "italic",
+            color: "#3a342b",
+          }}
+        >
           When does your card year reset?
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p
+          style={{
+            marginTop: 8,
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 16,
+            fontStyle: "italic",
+            color: "#6b5f4d",
+            lineHeight: 1.6,
+          }}
+        >
           Check your statement for the anniversary date. This helps us time the
           $300 travel credit and similar anniversary-based benefits. You can skip
           this.
@@ -66,7 +84,7 @@ export default function AnniversaryPage() {
       </div>
 
       <Card>
-        <div className="space-y-4">
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {selectedCards.includes("csr") && (
             <Input
               label="Chase Sapphire Reserve anniversary"
@@ -85,28 +103,42 @@ export default function AnniversaryPage() {
             />
           )}
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          <div className="flex gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                // Skip without setting anniversaries
-                setAnniversaryCsr("");
-                setAnniversaryUnited("");
-                handleSubmit();
+          {error && (
+            <p
+              style={{
+                fontFamily: "'Caveat', cursive",
+                fontSize: 15,
+                color: "#c98a8a",
               }}
-              className="flex-1"
             >
-              Skip
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="flex-1"
-            >
-              {loading ? "Saving..." : "Continue"}
-            </Button>
+              {error}
+            </p>
+          )}
+
+          <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  // Skip without setting anniversaries
+                  setAnniversaryCsr("");
+                  setAnniversaryUnited("");
+                  handleSubmit();
+                }}
+                className="w-full"
+              >
+                Skip
+              </Button>
+            </div>
+            <div style={{ flex: 1 }}>
+              <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="w-full"
+              >
+                {loading ? "Saving..." : "Continue"}
+              </Button>
+            </div>
           </div>
         </div>
       </Card>

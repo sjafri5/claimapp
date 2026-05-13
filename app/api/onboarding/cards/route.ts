@@ -21,8 +21,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { cardIds, anniversaryCsr, anniversaryUnited } = schema.parse(body);
 
-    // Enforce card limit for free users
-    if (user.plan !== "pro" && cardIds.length > 1) {
+    // Enforce card limit for free users (admins bypass)
+    const isAdmin = user.email === process.env.ADMIN_EMAIL;
+    if (user.plan !== "pro" && !isAdmin && cardIds.length > 1) {
       return NextResponse.json(
         { error: "Free plan allows 1 card. Upgrade to Pro for unlimited cards.", upgrade: true },
         { status: 403 }

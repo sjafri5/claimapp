@@ -72,27 +72,27 @@ export default function CardsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [plan, setPlan] = useState<string>("free");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
-      .then((d) => setPlan(d.plan || "free"))
+      .then((d) => {
+        setPlan(d.plan || "free");
+        setIsAdmin(d.isAdmin || false);
+      })
       .catch(() => {});
   }, []);
 
-  const isFree = plan !== "pro";
-  const atLimit = isFree && selected.length >= 1;
+  const isPro = plan === "pro" || isAdmin;
+  const needsUpgrade = !isPro && selected.length > 1;
 
   function toggleCard(cardId: string) {
-    if (selected.includes(cardId)) {
-      setSelected((prev) => prev.filter((id) => id !== cardId));
-      return;
-    }
-    if (atLimit) {
-      setError("Free plan allows 1 card. Upgrade to Pro for unlimited.");
-      return;
-    }
-    setSelected((prev) => [...prev, cardId]);
+    setSelected((prev) =>
+      prev.includes(cardId)
+        ? prev.filter((id) => id !== cardId)
+        : [...prev, cardId]
+    );
     setError("");
   }
 
@@ -103,12 +103,31 @@ export default function CardsPage() {
     }
     setError("");
 
+    // Store selected cards for after checkout/anniversary
+    sessionStorage.setItem("selected_cards", JSON.stringify(selected));
+
+    // If free user picked >1, send to checkout first
+    if (needsUpgrade) {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/stripe/checkout", { method: "POST" });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+      } catch {
+        setError("Something went wrong with checkout");
+        setLoading(false);
+        return;
+      }
+    }
+
     const needsAnniversary = selected.some((id) =>
       ANNIVERSARY_CARDS.includes(id)
     );
 
     if (needsAnniversary) {
-      sessionStorage.setItem("selected_cards", JSON.stringify(selected));
       router.push("/onboarding/anniversary");
     } else {
       setLoading(true);
@@ -135,23 +154,49 @@ export default function CardsPage() {
 
   return (
     <PageContainer className="max-w-lg">
-      <div className="mb-8 text-center">
+      <div style={{ textAlign: "center", marginBottom: 32 }}>
         <Logo />
-        <h1 className="mt-6 text-2xl font-bold text-gray-900">
+        <h1
+          style={{
+            marginTop: 24,
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontWeight: 500,
+            fontSize: 28,
+            fontStyle: "italic",
+            color: "#3a342b",
+          }}
+        >
           Which cards do you have?
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p
+          style={{
+            marginTop: 8,
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 16,
+            fontStyle: "italic",
+            color: "#6b5f4d",
+            lineHeight: 1.6,
+          }}
+        >
           Select the cards you want reminders for.
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         {CARD_GROUPS.map((group) => (
           <div key={group.issuer}>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <h3
+              style={{
+                fontFamily: "'Caveat', cursive",
+                fontSize: 20,
+                color: "#6b5f4d",
+                marginBottom: 8,
+                fontWeight: 500,
+              }}
+            >
               {group.issuer}
             </h3>
-            <div className="space-y-2">
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {group.cards.map((card) => (
                 <Checkbox
                   key={card.id}
@@ -166,25 +211,53 @@ export default function CardsPage() {
         ))}
       </div>
 
-      {isFree && (
-        <div className="mt-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-center text-sm text-yellow-800">
-          Free plan — 1 card.{" "}
-          <a href="/upgrade" className="font-semibold underline">
-            Upgrade to Pro ($10/yr)
-          </a>{" "}
-          for unlimited cards + monthly reminders.
+      {needsUpgrade && (
+        <div
+          style={{
+            marginTop: 16,
+            border: "1px solid #6f8a5e",
+            background: "rgba(155,176,138,.08)",
+            padding: 14,
+            textAlign: "center",
+            fontFamily: "'Caveat', cursive",
+            fontSize: 16,
+            color: "#3a342b",
+          }}
+        >
+          {selected.length} cards selected — Pro plan ($10/yr) will be applied at checkout.
+          <br />
+          <span style={{ fontSize: 14, color: "#6b5f4d" }}>
+            Or select just 1 card to continue free.
+          </span>
         </div>
       )}
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && (
+        <p
+          style={{
+            marginTop: 12,
+            fontFamily: "'Caveat', cursive",
+            fontSize: 15,
+            color: "#c98a8a",
+          }}
+        >
+          {error}
+        </p>
+      )}
 
-      <Button
-        onClick={handleContinue}
-        disabled={loading || selected.length === 0}
-        className="mt-6 w-full"
-      >
-        {loading ? "Saving..." : `Continue with ${selected.length} card${selected.length !== 1 ? "s" : ""}`}
-      </Button>
+      <div style={{ marginTop: 24 }}>
+        <Button
+          onClick={handleContinue}
+          disabled={loading || selected.length === 0}
+          className="w-full"
+        >
+          {loading
+            ? "Saving..."
+            : needsUpgrade
+              ? `Continue with ${selected.length} cards — $10/yr`
+              : `Continue with ${selected.length} card${selected.length !== 1 ? "s" : ""} — free`}
+        </Button>
+      </div>
     </PageContainer>
   );
 }

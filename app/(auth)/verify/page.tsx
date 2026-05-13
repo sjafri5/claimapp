@@ -52,18 +52,36 @@ export default function VerifyPage() {
 
   return (
     <PageContainer>
-      <div className="mb-8 text-center">
+      <div style={{ textAlign: "center", marginBottom: 32 }}>
         <Logo />
-        <h1 className="mt-6 text-2xl font-bold text-gray-900">
+        <h1
+          style={{
+            marginTop: 24,
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontWeight: 500,
+            fontSize: 28,
+            fontStyle: "italic",
+            color: "#3a342b",
+          }}
+        >
           Check your email
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p
+          style={{
+            marginTop: 8,
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 16,
+            fontStyle: "italic",
+            color: "#6b5f4d",
+            lineHeight: 1.6,
+          }}
+        >
           We sent a 6-digit code to {email}
         </p>
       </div>
 
       <Card>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit}>
           <Input
             label="Verification code"
             type="text"
@@ -73,13 +91,15 @@ export default function VerifyPage() {
             error={error}
           />
 
-          <Button
-            type="submit"
-            disabled={loading || code.length !== 6}
-            className="w-full"
-          >
-            {loading ? "Verifying..." : "Verify"}
-          </Button>
+          <div style={{ marginTop: 20 }}>
+            <Button
+              type="submit"
+              disabled={loading || code.length !== 6}
+              className="w-full"
+            >
+              {loading ? "Verifying..." : "Verify"}
+            </Button>
+          </div>
         </form>
       </Card>
     </PageContainer>

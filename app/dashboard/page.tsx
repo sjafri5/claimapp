@@ -192,43 +192,117 @@ export default async function DashboardPage() {
   upcoming.sort((a, b) => a.daysUntil - b.daysUntil);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
-      <div className="mb-8 flex items-center justify-between">
-        <Logo />
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">{user.email}</span>
-          {user.plan === "pro" ? (
-            <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-              Pro
-            </span>
-          ) : (
-            <a
-              href="/upgrade"
-              className="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-700 hover:bg-yellow-200"
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#efe7d4",
+        backgroundImage:
+          "radial-gradient(circle, rgba(58,52,43,.04) 1px, transparent 1.4px)",
+        backgroundSize: "3px 3px",
+        color: "#3a342b",
+        padding: "48px 16px",
+      }}
+    >
+      <div style={{ maxWidth: 672, margin: "0 auto" }}>
+        <div
+          style={{
+            marginBottom: 32,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Logo />
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span
+              style={{
+                fontFamily: "'Caveat', cursive",
+                fontSize: 15,
+                color: "#6b5f4d",
+              }}
             >
-              Free — Upgrade
-            </a>
-          )}
+              {user.email}
+            </span>
+            {user.plan === "pro" ? (
+              <span
+                style={{
+                  fontFamily: "'Caveat', cursive",
+                  fontSize: 14,
+                  color: "#6f8a5e",
+                  border: "1px solid #9bb08a",
+                  padding: "2px 10px",
+                  background: "rgba(155,176,138,.1)",
+                }}
+              >
+                Pro
+              </span>
+            ) : (
+              <a
+                href="/upgrade"
+                style={{
+                  fontFamily: "'Caveat', cursive",
+                  fontSize: 14,
+                  color: "#d4a83c",
+                  border: "1px solid #d4a83c",
+                  padding: "2px 10px",
+                  background: "rgba(212,168,60,.08)",
+                  textDecoration: "none",
+                }}
+              >
+                Free — Upgrade
+              </a>
+            )}
+          </div>
         </div>
+
+        <h1
+          style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontWeight: 500,
+            fontSize: 28,
+            fontStyle: "italic",
+          }}
+        >
+          Your credits
+        </h1>
+        <p
+          style={{
+            marginTop: 4,
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 16,
+            fontStyle: "italic",
+            color: "#6b5f4d",
+            lineHeight: 1.6,
+          }}
+        >
+          Upcoming credits across your cards. We&apos;ll email you before each
+          deadline.
+        </p>
+
+        {upcoming.length === 0 ? (
+          <div
+            style={{
+              marginTop: 32,
+              border: "1px solid #b8a784",
+              background: "#fffbf0",
+              padding: 32,
+              textAlign: "center",
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 16,
+              fontStyle: "italic",
+              color: "#6b5f4d",
+            }}
+          >
+            No upcoming credits found. Make sure you&apos;ve selected your cards.
+          </div>
+        ) : (
+          <DashboardClient
+            credits={upcoming}
+            plan={user.plan}
+            hasSubscription={!!user.stripeSubscriptionId}
+          />
+        )}
       </div>
-
-      <h1 className="text-2xl font-bold text-gray-900">Your credits</h1>
-      <p className="mt-1 text-gray-600">
-        Upcoming credits across your cards. We&apos;ll email you before each
-        deadline.
-      </p>
-
-      {upcoming.length === 0 ? (
-        <div className="mt-8 rounded-xl border border-gray-200 bg-gray-50 p-8 text-center text-gray-500">
-          No upcoming credits found. Make sure you&apos;ve selected your cards.
-        </div>
-      ) : (
-        <DashboardClient
-          credits={upcoming}
-          plan={user.plan}
-          hasSubscription={!!user.stripeSubscriptionId}
-        />
-      )}
     </div>
   );
 }

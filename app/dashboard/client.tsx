@@ -4,6 +4,31 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UpcomingCredit } from "./page";
 
+const T = {
+  card: "#fffbf0",
+  ink: "#3a342b",
+  inkSoft: "#6b5f4d",
+  sage: "#9bb08a",
+  sageD: "#6f8a5e",
+  rose: "#c98a8a",
+  ochre: "#d4a83c",
+  rule: "#b8a784",
+};
+
+function getBorderColor(item: UpcomingCredit) {
+  if (item.isClaimed) return T.sage;
+  if (item.daysUntil <= 7) return T.rose;
+  if (item.daysUntil <= 30) return T.ochre;
+  return T.rule;
+}
+
+function getBgColor(item: UpcomingCredit) {
+  if (item.isClaimed) return "rgba(155,176,138,.1)";
+  if (item.daysUntil <= 7) return "rgba(201,138,138,.08)";
+  if (item.daysUntil <= 30) return "rgba(212,168,60,.06)";
+  return T.card;
+}
+
 export function DashboardClient({
   credits,
   plan,
@@ -40,37 +65,69 @@ export function DashboardClient({
 
   return (
     <>
-      <div className="mt-6 space-y-3">
+      <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
         {credits.map((item) => (
           <div
             key={`${item.creditId}-${item.cycleKey}`}
-            className={`rounded-xl border p-4 ${
-              item.isClaimed
-                ? "border-green-200 bg-green-50"
-                : item.daysUntil <= 7
-                  ? "border-red-200 bg-red-50"
-                  : item.daysUntil <= 30
-                    ? "border-yellow-200 bg-yellow-50"
-                    : "border-gray-200 bg-white"
-            }`}
+            style={{
+              border: `1px solid ${getBorderColor(item)}`,
+              background: getBgColor(item),
+              padding: 16,
+              borderRadius: 0,
+            }}
           >
-            <div className="flex items-start justify-between">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+              }}
+            >
               <div>
-                <h3 className="font-semibold text-gray-900">
+                <h3
+                  style={{
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    fontWeight: 600,
+                    fontSize: 17,
+                    color: T.ink,
+                    margin: 0,
+                  }}
+                >
                   {item.creditName}
                 </h3>
-                <p className="text-sm text-gray-600">{item.cardName}</p>
+                <p
+                  style={{
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: 15,
+                    color: T.inkSoft,
+                    margin: "2px 0 0",
+                  }}
+                >
+                  {item.cardName}
+                </p>
               </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-gray-900">
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    fontWeight: 600,
+                    fontSize: 20,
+                    color: T.ink,
+                  }}
+                >
                   ${item.amountDollars}
                 </div>
                 <div
-                  className={`text-sm ${
-                    item.daysUntil <= 7
-                      ? "font-semibold text-red-600"
-                      : "text-gray-500"
-                  }`}
+                  style={{
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: 15,
+                    color: item.isClaimed
+                      ? T.sageD
+                      : item.daysUntil <= 7
+                        ? T.rose
+                        : T.inkSoft,
+                    fontWeight: item.daysUntil <= 7 && !item.isClaimed ? 600 : 400,
+                  }}
                 >
                   {item.isClaimed
                     ? "Claimed"
@@ -83,21 +140,58 @@ export function DashboardClient({
               </div>
             </div>
 
-            <div className="mt-2 flex items-center justify-between">
-              <span className="text-xs text-gray-400">
+            <div
+              style={{
+                marginTop: 10,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Caveat', cursive",
+                  fontSize: 13,
+                  color: T.inkSoft,
+                }}
+              >
                 Expires {item.deadline}
-                {item.monthReminderSent && " · 30-day reminder sent"}
-                {item.weekReminderSent && " · 7-day reminder sent"}
+                {item.monthReminderSent && " \u00b7 30-day reminder sent"}
+                {item.weekReminderSent && " \u00b7 7-day reminder sent"}
               </span>
 
               {!item.isClaimed && (
-                <button
-                  onClick={() => markDone(item.creditId, item.cycleKey)}
-                  disabled={claiming === item.creditId}
-                  className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                <span
+                  style={{
+                    display: "inline-block",
+                    border: `1px solid ${T.ink}`,
+                    padding: 4,
+                    lineHeight: 1,
+                    cursor: claiming === item.creditId ? "not-allowed" : "pointer",
+                    opacity: claiming === item.creditId ? 0.5 : 1,
+                  }}
                 >
-                  {claiming === item.creditId ? "..." : "Mark as done"}
-                </button>
+                  <button
+                    onClick={() => markDone(item.creditId, item.cycleKey)}
+                    disabled={claiming === item.creditId}
+                    style={{
+                      display: "inline-block",
+                      background: T.ink,
+                      color: T.card,
+                      textTransform: "uppercase",
+                      letterSpacing: "1.5px",
+                      fontFamily: "'Cormorant Garamond', Georgia, serif",
+                      fontWeight: 600,
+                      fontSize: 11,
+                      padding: "6px 14px",
+                      borderRadius: 0,
+                      border: "none",
+                      cursor: claiming === item.creditId ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {claiming === item.creditId ? "..." : "Mark as done"}
+                  </button>
+                </span>
               )}
             </div>
           </div>
@@ -105,24 +199,83 @@ export function DashboardClient({
       </div>
 
       {/* Subscription management */}
-      <div className="mt-8 border-t border-gray-100 pt-6">
+      <div
+        style={{
+          marginTop: 32,
+          borderTop: `1px solid ${T.rule}`,
+          paddingTop: 24,
+        }}
+      >
         {plan === "pro" && hasSubscription ? (
           <button
             onClick={manageSubscription}
-            className="text-sm text-gray-400 hover:text-gray-600"
+            style={{
+              background: "none",
+              border: "none",
+              fontFamily: "'Caveat', cursive",
+              fontSize: 15,
+              color: T.inkSoft,
+              cursor: "pointer",
+              textDecoration: "underline",
+              textDecorationStyle: "wavy" as const,
+              textDecorationColor: T.sage,
+              padding: 0,
+            }}
           >
             Manage subscription
           </button>
         ) : plan !== "pro" ? (
-          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-center">
-            <p className="text-sm text-yellow-800">
+          <div
+            style={{
+              border: `1px solid ${T.ochre}`,
+              background: "rgba(212,168,60,.06)",
+              padding: 20,
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontSize: 15,
+                fontStyle: "italic",
+                color: T.ink,
+                margin: 0,
+              }}
+            >
               You&apos;re on the free plan (1 card, no monthly reminders).
             </p>
             <a
               href="/upgrade"
-              className="mt-2 inline-block rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+              style={{
+                display: "inline-block",
+                marginTop: 12,
+                textDecoration: "none",
+              }}
             >
-              Upgrade to Pro — $10/year
+              <span
+                style={{
+                  display: "inline-block",
+                  border: `1px solid ${T.ink}`,
+                  padding: 4,
+                  lineHeight: 1,
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    background: T.ink,
+                    color: T.card,
+                    textTransform: "uppercase",
+                    letterSpacing: "1.5px",
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    padding: "10px 24px",
+                  }}
+                >
+                  Upgrade to Pro — $10/year
+                </span>
+              </span>
             </a>
           </div>
         ) : null}
